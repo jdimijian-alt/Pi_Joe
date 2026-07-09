@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pi_Joe</title>
+<meta name="theme-color" content="#1e2a3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pi_Joe">
+<link rel="manifest" href="manifest-pi.json">
+<link rel="apple-touch-icon" href="apple-touch-icon-pi.png">
+<style>
+:root{
+  --bg:#1e2a3a;--bg-card:#2a3a4e;--bg-hdr:#141e2a;--bg-sub:#243244;
+  --accent:#e05c6e;--accent2:#f5a623;--green:#2ecc71;--blue:#5dade2;
+  --grey:#5a7a8a;--text:#ffffff;--text-med:#c8dde8;--text-dim:#8ab0c4;
+  --border:#243244;--yellow:#f5c518;
+  --key:#2e5070;--key-sel:#1e8449;--ok:#2ecc71;--ko:#e05c6e;
+}
+*{box-sizing:border-box;margin:0;padding:0;
+  -webkit-touch-callout:none;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-user-select:none;-ms-user-select:none;user-select:none;}
+input,textarea{-webkit-user-select:text;user-select:text;}
+button,input,select{touch-action:manipulation;}
+body{-webkit-user-select:none;user-select:none;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+header{background:var(--bg-hdr);display:flex;align-items:center;justify-content:space-between;padding:10px 16px;}
+header h1{font-size:1.2rem;font-weight:700;letter-spacing:2px;}
+header h1 .pi{color:var(--accent2);font-size:1.4rem;}
+.hdr-right{display:flex;gap:6px;}
+.info-bar{background:var(--bg-sub);display:flex;align-items:center;gap:14px;padding:6px 16px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:.85rem;flex-wrap:wrap;}
+.timer{font-size:1.05rem;font-weight:700;color:var(--accent2);min-width:46px;}
+.hearts{font-size:1rem;letter-spacing:2px;}
+.score{margin-left:auto;font-weight:700;}
+main{max-width:720px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:12px;}
+.mode-lbl{font-size:.72rem;font-weight:600;color:var(--yellow);opacity:.85;min-height:14px;}
+
+/* ZONE AFFICHAGE DECIMALES */
+.pi-box{background:var(--bg-card);border-radius:10px;padding:14px 16px;min-height:120px;}
+.pi-display{font-family:'Courier New',monospace;font-weight:700;line-height:1.7;word-break:break-all;letter-spacing:1px;}
+.pi-prefix{color:var(--accent2);}
+.d-ok{color:var(--text);}
+.d-cur{color:var(--yellow);border-bottom:2px solid var(--yellow);}
+.d-ko{color:#fff;background:var(--ko);border-radius:3px;padding:0 1px;}
+.d-hidden{color:var(--text-dim);opacity:.35;}
+.d-reveal{color:var(--accent2);}
+.rv-lineno{display:inline-block;min-width:3.2em;color:var(--text-dim);font-size:.7em;text-align:right;margin-right:.6em;user-select:none;}
+.sep-hundred{display:inline-block;width:.6em;}
+.grp-space{display:inline-block;width:.3em;}
+
+.counter{text-align:center;font-size:.85rem;color:var(--text-dim);}
+.counter b{color:var(--accent2);font-size:1.4rem;}
+
+/* PAVE */
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:340px;margin:0 auto;width:100%;}
+.pad-key{font-family:inherit;font-size:1.6rem;font-weight:700;background:var(--key);color:#fff;border:2px solid transparent;border-radius:10px;height:58px;cursor:pointer;transition:transform .08s,background .12s;}
+.pad-key:hover{background:var(--key-sel);}
+.pad-key:active{transform:scale(0.92);filter:brightness(.85);}
+.pad-key.wide{grid-column:span 1;}
+.pad-key.act{background:var(--grey);font-size:1.2rem;}
+.pad-flash-ok{animation:fok .3s;}
+.pad-flash-ko{animation:fko .3s;}
+@keyframes fok{0%{background:var(--ok)}100%{background:var(--key)}}
+@keyframes fko{0%{background:var(--ko)}100%{background:var(--key)}}
+
+.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.act-btn{font-family:inherit;font-size:.9rem;font-weight:700;border:none;border-radius:8px;padding:10px 18px;cursor:pointer;transition:transform .1s,opacity .15s;}
+.act-btn:hover{transform:scale(1.03);}
+.act-btn.green{background:var(--green);color:#12232e;}
+.act-btn.blue{background:var(--blue);color:#12232e;}
+.act-btn.red{background:var(--accent);color:#fff;}
+.act-btn.grey{background:var(--grey);color:#fff;}
+.act-btn.yellow{background:var(--yellow);color:#12232e;}
+.act-btn:disabled{opacity:.4;cursor:default;transform:none;}
+.status{text-align:center;font-size:.85rem;color:var(--text-dim);padding:2px 0;min-height:20px;}
+
+/* TOAST */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--bg-hdr);color:var(--text);border-radius:10px;padding:12px 20px;font-size:.92rem;font-weight:600;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:200;max-width:90vw;transition:transform .3s ease,opacity .3s ease;opacity:0;pointer-events:none;white-space:pre-line;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.green{border-left:5px solid var(--green);}
+.toast.orange{border-left:5px solid var(--accent2);}
+.toast.red{border-left:5px solid var(--accent);}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg-card);border-radius:12px;padding:22px;min-width:300px;max-width:640px;width:95%;max-height:90vh;display:flex;flex-direction:column;}
+.modal h2{font-size:1rem;margin-bottom:12px;color:var(--accent2);flex-shrink:0;}
+.modal-body{flex:1;overflow-y:auto;min-height:0;}
+.modal .row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:.88rem;}
+.modal label{flex:1;color:var(--text-med);}
+.modal input[type=number]{width:70px;background:var(--bg-hdr);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.88rem;text-align:center;}
+.modal select{background:var(--bg-hdr);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:.88rem;}
+.modal input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent2);}
+.modal-actions{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap;flex-shrink:0;}
+.opts-section{font-size:.72rem;font-weight:700;color:var(--accent2);padding:12px 0 4px;letter-spacing:1px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.opts-section:first-child{padding-top:0;}
+.opt-tabs{display:flex;margin-bottom:14px;border-bottom:2px solid var(--border);}
+.opt-tab-btn{background:transparent;color:var(--text-dim);border:none;padding:8px 16px;cursor:pointer;font-size:.88rem;font-family:inherit;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-2px;}
+.opt-tab-btn.active{color:var(--accent2);border-bottom-color:var(--accent2);}
+.opt-pane{display:none;}
+.opt-pane.active{display:block;}
+
+/* SCORES */
+.sc-item{background:var(--bg-sub);border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;gap:10px;font-size:.85rem;}
+.sc-item .sc-n{font-size:1.3rem;font-weight:700;color:var(--accent2);min-width:60px;}
+.sc-item .sc-meta{flex:1;color:var(--text-dim);font-size:.78rem;line-height:1.4;}
+.sc-item .sc-del{background:var(--bg-hdr);border:1px solid var(--border);color:var(--accent);cursor:pointer;padding:4px 10px;border-radius:6px;font-size:1rem;}
+.sc-record{border-left:3px solid var(--yellow);}
+.sc-empty{color:var(--text-dim);text-align:center;padding:20px;font-size:.85rem;}
+.big-record{text-align:center;padding:8px 0 14px;}
+.big-record .lbl{font-size:.72rem;color:var(--text-dim);letter-spacing:1px;}
+.big-record .val{font-size:2.6rem;font-weight:900;color:var(--yellow);line-height:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="pi">&pi;</span>_Joe <span style="font-size:.55rem;font-weight:400;opacity:.7;letter-spacing:1px;">by J.Dimijian + Claude</span></h1>
+  <div class="hdr-right">
+    <button class="act-btn grey" onclick="openAbout()" style="padding:8px 11px;" title="A propos">&#8505;&#65039;</button>
+    <button class="act-btn grey" onclick="openScores()" style="padding:8px 11px;" title="Scores">&#127942;</button>
+    <button class="act-btn grey" onclick="openOptions()">Options</button>
+  </div>
+</header>
+
+<div class="info-bar">
+  <span id="lbl-mode" style="color:var(--text-dim)">&mdash;</span>
+  <span class="timer" id="lbl-timer" style="display:none;">&mdash;</span>
+  <span class="hearts" id="lbl-hearts"></span>
+  <span class="score">Record : <span id="lbl-record" style="color:var(--yellow)">0</span></span>
+</div>
+
+<main>
+  <div class="mode-lbl" id="lbl-modeinfo"></div>
+
+  <div class="pi-box">
+    <div class="pi-display" id="pi-display" style="font-size:1.5rem;"></div>
+  </div>
+
+  <div class="counter" id="counter"><b>0</b> decimales</div>
+
+  <div class="pad" id="pad"></div>
+
+  <div class="actions">
+    <button class="act-btn red"   id="btn-start" onclick="startGame()">Demarrer</button>
+    <button class="act-btn yellow" id="btn-reveal" onclick="toggleReveal()" style="display:none;">Voir</button>
+    <button class="act-btn grey"  id="btn-stop" onclick="stopGame()" style="display:none;">Arreter</button>
+    <button class="act-btn blue"  id="btn-revise" onclick="openRevise()">Reviser</button>
+  </div>
+
+  <div class="status" id="lbl-status">Choisis un mode dans Options, puis Demarrer.</div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<!-- ABOUT -->
+<div class="modal-overlay" id="modal-about">
+  <div class="modal" style="max-width:520px;">
+    <h2 style="flex-shrink:0;">&#8505;&#65039; A propos</h2>
+    <div class="modal-body" style="font-size:.88rem;line-height:1.6;">
+      <div style="text-align:center;padding:10px 0 16px;">
+        <div style="font-size:2.4rem;font-weight:900;color:var(--accent2);letter-spacing:2px;">&pi;_Joe</div>
+        <div id="about-version" style="font-size:.8rem;color:var(--text-dim);margin-top:4px;"></div>
+      </div>
+      <div style="background:var(--bg-sub);border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:.72rem;font-weight:700;color:var(--accent2);letter-spacing:1px;margin-bottom:6px;">LE JEU</div>
+        Memorise et recite les decimales de &pi; sur un pave a l'ecran.
+        Configure l'affichage, la saisie et le systeme de vies dans les Options.
+        10&nbsp;000 decimales embarquees.
+      </div>
+      <div style="background:var(--bg-sub);border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:.72rem;font-weight:700;color:var(--accent2);letter-spacing:1px;margin-bottom:8px;">MODES DE VIES</div>
+        <div style="margin-bottom:4px;"><b>Stop</b> &mdash; la 1re erreur termine la partie.</div>
+        <div style="margin-bottom:4px;"><b>Vies</b> &mdash; N erreurs autorisees.</div>
+        <div><b>Vies + rattrapage</b> &mdash; 1 vie recuperee tous les K corrects consecutifs.</div>
+      </div>
+      <div style="background:var(--bg-sub);border-radius:8px;padding:12px 16px;margin-bottom:12px;">
+        <div style="font-size:.72rem;font-weight:700;color:var(--accent2);letter-spacing:1px;margin-bottom:8px;">CREDITS</div>
+        <div style="margin-bottom:4px;"><span style="color:var(--text-med);">Concept &amp; developpement</span><br>Joseph Dimijian + Claude (Anthropic), 2025</div>
+        <div><span style="color:var(--text-med);">Contact</span><br><a href="mailto:jdimijian@yahoo.fr" style="color:var(--blue);">jdimijian@yahoo.fr</a></div>
+      </div>
+      <div style="text-align:center;font-size:.72rem;color:var(--text-dim);padding:6px 0;">&copy; Joseph Dimijian</div>
+    </div>
+    <div class="modal-actions"><button class="act-btn grey" onclick="closeModal('modal-about')">Fermer</button></div>
+  </div>
+</div>
+
+<!-- OPTIONS -->
+<div class="modal-overlay" id="modal-options">
+  <div class="modal">
+    <h2>Options</h2>
+    <div class="opt-tabs">
+      <button class="opt-tab-btn active" onclick="optTab('jeu',this)">Jeu</button>
+      <button class="opt-tab-btn" onclick="optTab('affichage',this)">Affichage</button>
+      <button class="opt-tab-btn" onclick="optTab('saisie',this)">Saisie</button>
+    </div>
+    <div class="modal-body">
+      <div class="opt-pane active" id="pane-jeu">
+        <div class="opts-section">SYSTEME DE VIES</div>
+        <div class="row"><label>Mode</label>
+          <select id="o-lifemode">
+            <option value="stop">Stop (1 erreur)</option>
+            <option value="lives">Vies limitees</option>
+            <option value="recup">Vies + rattrapage</option>
+          </select></div>
+        <div class="row" id="row-lives"><label>Nombre de vies</label><input type="number" id="o-lives" min="1" max="20" value="3"></div>
+        <div class="row" id="row-recup"><label>1 vie tous les (corrects)</label><input type="number" id="o-recup" min="5" max="200" value="20"></div>
+        <div class="opts-section">DEPART</div>
+        <div class="row"><label>Commencer a la decimale n&deg;</label><input type="number" id="o-startpos" min="1" max="9999" value="1"></div>
+        <div class="opts-section">CHRONO</div>
+        <div class="row"><label>Afficher un chronometre</label><input type="checkbox" id="o-timer"></div>
+      </div>
+
+      <div class="opt-pane" id="pane-affichage">
+        <div class="opts-section">GROUPEMENT</div>
+        <div class="row"><label>Espace tous les (chiffres)</label><input type="number" id="o-group" min="0" max="20" value="5"></div>
+        <div class="row"><label>Grand espace toutes les centaines</label><input type="checkbox" id="o-hundred" checked></div>
+        <div class="row"><label>Saut de ligne tous les (0=auto)</label><input type="number" id="o-wrap" min="0" max="200" value="0"></div>
+        <div class="opts-section">CHIFFRES</div>
+        <div class="row"><label>Afficher le "3." initial</label><input type="checkbox" id="o-prefix" checked></div>
+        <div class="row"><label>Taille du texte</label>
+          <select id="o-fontsize">
+            <option value="1.2">Petite</option>
+            <option value="1.5" selected>Normale</option>
+            <option value="1.9">Grande</option>
+            <option value="2.4">Tres grande</option>
+          </select></div>
+        <div class="opts-section">RETOUR VISUEL</div>
+        <div class="row"><label>Mode aveugle (ne pas voir sa saisie)</label><input type="checkbox" id="o-blind"></div>
+        <div class="row"><label>Numeroter la position courante</label><input type="checkbox" id="o-showpos" checked></div>
+      </div>
+
+      <div class="opt-pane" id="pane-saisie">
+        <div class="opts-section">PAVE NUMERIQUE</div>
+        <div class="row"><label>Disposition</label>
+          <select id="o-padlayout">
+            <option value="phone">Telephone (1-2-3 en haut)</option>
+            <option value="calc">Calculatrice (1-2-3 en bas)</option>
+          </select></div>
+        <div class="row"><label>Validation</label>
+          <select id="o-validation">
+            <option value="live">Immediate (erreur signalee de suite)</option>
+            <option value="free">Libre puis verification</option>
+          </select></div>
+        <div class="row"><label>Vibration au toucher (mobile)</label><input type="checkbox" id="o-haptic" checked></div>
+        <div class="row"><label>Son sur erreur</label><input type="checkbox" id="o-sound"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="act-btn grey" onclick="closeModal('modal-options')">Fermer</button>
+      <button class="act-btn green" onclick="saveOptions()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCORES -->
+<div class="modal-overlay" id="modal-scores">
+  <div class="modal">
+    <h2>&#127942; Scores &amp; records</h2>
+    <div class="modal-body">
+      <div class="big-record">
+        <div class="lbl">MEILLEUR SCORE</div>
+        <div class="val" id="sc-best">0</div>
+        <div style="font-size:.72rem;color:var(--text-dim)">decimales sans faute</div>
+      </div>
+      <div id="sc-list"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="act-btn grey" onclick="exportScores()">Exporter</button>
+      <button class="act-btn grey" onclick="importScores()">Importer</button>
+      <button class="act-btn red" onclick="resetScores()">Tout effacer</button>
+      <button class="act-btn blue" onclick="closeModal('modal-scores')">Fermer</button>
+    </div>
+  </div>
+</div>
+<!-- REVISER -->
+<div class="modal-overlay" id="modal-revise">
+  <div class="modal" style="max-width:680px;">
+    <h2>Reviser les decimales</h2>
+    <div class="row" style="flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+      <label style="flex:0 0 auto;">De la n&deg;</label>
+      <input type="number" id="rv-from" min="1" max="10000" value="1" style="width:80px;" onchange="renderRevise()">
+      <label style="flex:0 0 auto;">a la n&deg;</label>
+      <input type="number" id="rv-to" min="1" max="10000" value="100" style="width:80px;" onchange="renderRevise()">
+      <select id="rv-size" onchange="renderRevise()" style="margin-left:auto;">
+        <option value="1.2">Petite</option>
+        <option value="1.5" selected>Normale</option>
+        <option value="1.9">Grande</option>
+        <option value="2.4">Tres grande</option>
+      </select>
+      <label style="flex:0 0 auto;display:flex;align-items:center;gap:5px;"><input type="checkbox" id="rv-lineno" checked onchange="renderRevise()"> n&deg; ligne</label>
+    </div>
+    <div class="modal-body">
+      <div id="rv-display" class="pi-display" style="line-height:1.9;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="act-btn grey" onclick="rvJump(-1)">&#9664; Prec.</button>
+      <button class="act-btn grey" onclick="rvJump(1)">Suiv. &#9654;</button>
+      <button class="act-btn blue" onclick="closeModal('modal-revise')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="import-file" accept="application/json" style="display:none;">
+
+<script>
+const VERSION = "v1.0";
+const PI = "1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446095505822317253594081284811174502841027019385211055596446229489549303819644288109756659334461284756482337867831652712019091456485669234603486104543266482133936072602491412737245870066063155881748815209209628292540917153643678925903600113305305488204665213841469519415116094330572703657595919530921861173819326117931051185480744623799627495673518857527248912279381830119491298336733624406566430860213949463952247371907021798609437027705392171762931767523846748184676694051320005681271452635608277857713427577896091736371787214684409012249534301465495853710507922796892589235420199561121290219608640344181598136297747713099605187072113499999983729780499510597317328160963185950244594553469083026425223082533446850352619311881710100031378387528865875332083814206171776691473035982534904287554687311595628638823537875937519577818577805321712268066130019278766111959092164201989380952572010654858632788659361533818279682303019520353018529689957736225994138912497217752834791315155748572424541506959508295331168617278558890750983817546374649393192550604009277016711390098488240128583616035637076601047101819429555961989467678374494482553797747268471040475346462080466842590694912933136770289891521047521620569660240580381501935112533824300355876402474964732639141992726042699227967823547816360093417216412199245863150302861829745557067498385054945885869269956909272107975093029553211653449872027559602364806654991198818347977535663698074265425278625518184175746728909777727938000816470600161452491921732172147723501414419735685481613611573525521334757418494684385233239073941433345477624168625189835694855620992192221842725502542568876717904946016534668049886272327917860857843838279679766814541009538837863609506800642251252051173929848960841284886269456042419652850222106611863067442786220391949450471237137869609563643719172874677646575739624138908658326459958133904780275900994657640789512694683983525957098258226205224894077267194782684826014769909026401363944374553050682034962524517493996514314298091906592509372216964615157098583874105978859597729754989301617539284681382686838689427741559918559252459539594310499725246808459872736446958486538367362226260991246080512438843904512441365497627807977156914359977001296160894416948685558484063534220722258284886481584560285060168427394522674676788952521385225499546667278239864565961163548862305774564980355936345681743241125150760694794510965960940252288797108931456691368672287489405601015033086179286809208747609178249385890097149096759852613655497818931297848216829989487226588048575640142704775551323796414515237462343645428584447952658678210511413547357395231134271661021359695362314429524849371871101457654035902799344037420073105785390621983874478084784896833214457138687519435064302184531910484810053706146806749192781911979399520614196634287544406437451237181921799983910159195618146751426912397489409071864942319615679452080951465502252316038819301420937621378559566389377870830390697920773467221825625996615014215030680384477345492026054146659252014974428507325186660021324340881907104863317346496514539057962685610055081066587969981635747363840525714591028970641401109712062804390397595156771577004203378699360072305587631763594218731251471205329281918261861258673215791984148488291644706095752706957220917567116722910981690915280173506712748583222871835209353965725121083579151369882091444210067510334671103141267111369908658516398315019701651511685171437657618351556508849099898599823873455283316355076479185358932261854896321329330898570642046752590709154814165498594616371802709819943099244889575712828905923233260972997120844335732654893823911932597463667305836041428138830320382490375898524374417029132765618093773444030707469211201913020330380197621101100449293215160842444859637669838952286847831235526582131449576857262433441893039686426243410773226978028073189154411010446823252716201052652272111660396665573092547110557853763466820653109896526918620564769312570586356620185581007293606598764861179104533488503461136576867532494416680396265797877185560845529654126654085306143444318586769751456614068007002378776591344017127494704205622305389945613140711270004078547332699390814546646458807972708266830634328587856983052358089330657574067954571637752542021149557615814002501262285941302164715509792592309907965473761255176567513575178296664547791745011299614890304639947132962107340437518957359614589019389713111790429782856475032031986915140287080859904801094121472213179476477726224142548545403321571853061422881375850430633217518297986622371721591607716692547487389866549494501146540628433663937900397692656721463853067360965712091807638327166416274888800786925602902284721040317211860820419000422966171196377921337575114959501566049631862947265473642523081770367515906735023507283540567040386743513622224771589150495309844489333096340878076932599397805419341447377441842631298608099888687413260472156951623965864573021631598193195167353812974167729478672422924654366800980676928238280689964004824354037014163149658979409243237896907069779422362508221688957383798623001593776471651228935786015881617557829735233446042815126272037343146531977774160319906655418763979293344195215413418994854447345673831624993419131814809277771038638773431772075456545322077709212019051660962804909263601975988281613323166636528619326686336062735676303544776280350450777235547105859548702790814356240145171806246436267945612753181340783303362542327839449753824372058353114771199260638133467768796959703098339130771098704085913374641442822772634659470474587847787201927715280731767907707157213444730605700733492436931138350493163128404251219256517980694113528013147013047816437885185290928545201165839341965621349143415956258658655705526904965209858033850722426482939728584783163057777560688876446248246857926039535277348030480290058760758251047470916439613626760449256274204208320856611906254543372131535958450687724602901618766795240616342522577195429162991930645537799140373404328752628889639958794757291746426357455254079091451357111369410911939325191076020825202618798531887705842972591677813149699009019211697173727847684726860849003377024242916513005005168323364350389517029893922334517220138128069650117844087451960121228599371623130171144484640903890644954440061986907548516026327505298349187407866808818338510228334508504860825039302133219715518430635455007668282949304137765527939751754613953984683393638304746119966538581538420568533862186725233402830871123282789212507712629463229563989898935821167456270102183564622013496715188190973038119800497340723961036854066431939509790190699639552453005450580685501956730229219139339185680344903982059551002263535361920419947455385938102343955449597783779023742161727111723643435439478221818528624085140066604433258885698670543154706965747458550332323342107301545940516553790686627333799585115625784322988273723198987571415957811196358330059408730681216028764962867446047746491599505497374256269010490377819868359381465741268049256487985561453723478673303904688383436346553794986419270563872931748723320837601123029911367938627089438799362016295154133714248928307220126901475466847653576164773794675200490757155527819653621323926406160136358155907422020203187277605277219005561484255518792530343513984425322341576233610642506390497500865627109535919465897514131034822769306247435363256916078154781811528436679570611086153315044521274739245449454236828860613408414863776700961207151249140430272538607648236341433462351897576645216413767969031495019108575984423919862916421939949072362346468441173940326591840443780513338945257423995082965912285085558215725031071257012668302402929525220118726767562204154205161841634847565169998116141010029960783869092916030288400269104140792886215078424516709087000699282120660418371806535567252532567532861291042487761825829765157959847035622262934860034158722980534989650226291748788202734209222245339856264766914905562842503912757710284027998066365825488926488025456610172967026640765590429099456815065265305371829412703369313785178609040708667114965583434347693385781711386455873678123014587687126603489139095620099393610310291616152881384379099042317473363948045759314931405297634757481193567091101377517210080315590248530906692037671922033229094334676851422144773793937517034436619910403375111735471918550464490263655128162288244625759163330391072253837421821408835086573917715096828874782656995995744906617583441375223970968340800535598491754173818839994469748676265516582765848358845314277568790029095170283529716344562129640435231176006651012412006597558512761785838292041974844236080071930457618932349229279650198751872127267507981255470958904556357921221033346697499235630254947802490114195212382815309114079073860251522742995818072471625916685451333123948049470791191532673430282441860414263639548000448002670496248201792896476697583183271314251702969234889627668440323260927524960357996469256504936818360900323809293459588970695365349406034021665443755890045632882250545255640564482465151875471196218443965825337543885690941130315095261793780029741207665147939425902989695946995565761218656196733786236256125216320862869222103274889218654364802296780705765615144632046927906821207388377814233562823608963208068222468012248261177185896381409183903673672220888321513755600372798394004152970028783076670944474560134556417254370906979396122571429894671543578468788614445812314593571984922528471605049221242470141214780573455105008019086996033027634787081081754501193071412233908663938339529425786905076431006383519834389341596131854347546495569781038293097164651438407007073604112373599843452251610507027056235266012764848308407611830130527932054274628654036036745328651057065874882256981579367897669742205750596834408697350201410206723585020072452256326513410559240190274216248439140359989535394590944070469120914093870012645600162374288021092764579310657922955249887275846101264836999892256959688159205600101655256375678";  // 10000 decimales (sans le "3.")
+
+/* ---------- OPTIONS / ETAT ---------- */
+const DEFAULTS = {
+  lifemode:"lives", lives:3, recup:20, startpos:1, timer:false,
+  group:5, hundred:true, wrap:0, prefix:true, fontsize:"1.5",
+  blind:false, showpos:true,
+  padlayout:"phone", validation:"live", haptic:true, sound:false
+};
+let opt = load('pijoe_opts', DEFAULTS);
+let scores = load('pijoe_scores', []);
+let best = load('pijoe_best', 0);
+
+function load(k,d){ try{const v=JSON.parse(localStorage.getItem(k)); return v==null?structuredClone(d):v;}catch(e){return structuredClone(d);} }
+function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
+
+/* ---------- GAME STATE ---------- */
+let G = null; // {pos, correct, lives, streak, blindReveal, errors, startTs, timerId, live}
+
+/* ---------- INIT ---------- */
+document.getElementById('about-version').textContent = VERSION;
+refreshOptUI(); updateRecordLabel(); buildPad(); renderIdle();
+
+/* ---------- OPTIONS UI ---------- */
+function openOptions(){ refreshOptUI(); openModal('modal-options'); }
+function optTab(id,btn){
+  document.querySelectorAll('.opt-tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.opt-pane').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('pane-'+id).classList.add('active');
+}
+function refreshOptUI(){
+  for(const k in DEFAULTS){
+    const el = document.getElementById('o-'+k); if(!el) continue;
+    if(el.type==='checkbox') el.checked = opt[k]; else el.value = opt[k];
+  }
+  toggleLifeRows();
+  document.getElementById('o-lifemode').onchange = toggleLifeRows;
+}
+function toggleLifeRows(){
+  const m = document.getElementById('o-lifemode').value;
+  document.getElementById('row-lives').style.display = (m==='lives'||m==='recup')?'flex':'none';
+  document.getElementById('row-recup').style.display = (m==='recup')?'flex':'none';
+}
+function saveOptions(){
+  for(const k in DEFAULTS){
+    const el = document.getElementById('o-'+k); if(!el) continue;
+    if(el.type==='checkbox') opt[k]=el.checked;
+    else if(el.type==='number') opt[k]=parseInt(el.value)||DEFAULTS[k];
+    else opt[k]=el.value;
+  }
+  save('pijoe_opts', opt);
+  closeModal('modal-options');
+  buildPad(); renderIdle();
+  toast('Options enregistrees','green');
+}
+
+/* ---------- PAVE ---------- */
+function buildPad(){
+  const pad = document.getElementById('pad');
+  pad.innerHTML='';
+  let rows;
+  if(opt.padlayout==='calc') rows=[[7,8,9],[4,5,6],[1,2,3],['back',0,'ok']];
+  else rows=[[1,2,3],[4,5,6],[7,8,9],['back',0,'ok']];
+  rows.flat().forEach(v=>{
+    const b=document.createElement('button');
+    b.className='pad-key';
+    if(v==='back'){b.classList.add('act');b.innerHTML='&#9003;';b.onclick=()=>onBack();}
+    else if(v==='ok'){b.classList.add('act');b.innerHTML='&#10004;';b.onclick=()=>onValidateFree();b.id='key-ok';}
+    else {b.textContent=v;b.onclick=()=>onDigit(v,b);b.id='key-'+v;}
+    pad.appendChild(b);
+  });
+  // en mode live, le bouton OK ne sert pas -> on le grise
+  const okb=document.getElementById('key-ok');
+  if(okb) okb.style.opacity = (opt.validation==='free' && G && G.live)?'1':'.4';
+}
+
+/* ---------- RENDER ---------- */
+function renderIdle(){
+  document.getElementById('lbl-mode').textContent = modeLabel();
+  document.getElementById('lbl-modeinfo').textContent = '';
+  document.getElementById('lbl-hearts').textContent='';
+  document.getElementById('lbl-timer').style.display='none';
+  document.getElementById('counter').innerHTML='<b>0</b> decimales';
+  document.getElementById('btn-reveal').style.display='none';
+  document.getElementById('btn-stop').style.display='none';
+  document.getElementById('btn-start').style.display='inline-block';
+  document.getElementById('btn-revise').disabled=false;
+  renderDisplay(0,-1);
+}
+function modeLabel(){
+  const m={stop:'STOP',lives:'VIES '+opt.lives,recup:'VIES '+opt.lives+' +R'+opt.recup}[opt.lifemode];
+  return 'Mode '+m+' | depart n&deg;'+opt.startpos;
+}
+function updateRecordLabel(){ document.getElementById('lbl-record').textContent = best; }
+
+// construit l'affichage : validees + courante + reste masque
+function renderDisplay(nDone, curIdx){
+  const disp = document.getElementById('pi-display');
+  disp.style.fontSize = opt.fontsize+'rem';
+  const start = opt.startpos-1;
+  let html = '';
+  if(opt.prefix) html += '<span class="pi-prefix">3,</span> ';
+  // fenetre affichee : on montre depuis start
+  const absDone = start + nDone;
+  const total = PI.length;
+  // on affiche validees, la courante, puis un buffer masque
+  const showAhead = 0; // on ne devoile pas la suite
+  for(let i=start; i<total; i++){
+    const rel = i-start; // 0-based dans la partie
+    let cls, ch=PI[i];
+    if(rel < nDone){ cls='d-ok'; }
+    else if(rel === nDone && curIdx>=0){ cls='d-cur'; ch = G && G.pendingWrong!=null ? G.pendingWrong : '_'; }
+    else if(rel === nDone){ cls='d-cur'; ch='_'; }
+    else { cls='d-hidden'; ch='&middot;'; if(rel>nDone+40) { /* limite le DOM */ } }
+    // separateurs bases sur la position ABSOLUE (i+1 = numero de decimale)
+    let sep='';
+    const numDec = i+1; // 1-based
+    if(opt.hundred && numDec>1 && (numDec-1)%100===0) sep='<span class="sep-hundred"></span>';
+    else if(opt.group>0 && numDec>1 && (numDec-1)%opt.group===0) sep='<span class="grp-space"></span>';
+    if(opt.wrap>0 && numDec>1 && (numDec-1)%opt.wrap===0) sep='<br>';
+    html += sep + '<span class="'+cls+'">'+ch+'</span>';
+    if(rel > nDone+60) break; // on borne le rendu pour perf
+  }
+  disp.innerHTML = html;
+  if(opt.showpos){
+    document.getElementById('counter').innerHTML =
+      '<b>'+nDone+'</b> decimales &nbsp;|&nbsp; position n&deg;'+(absDone+ (curIdx>=0?1:0));
+  } else {
+    document.getElementById('counter').innerHTML = '<b>'+nDone+'</b> decimales';
+  }
+}
+
+/* ---------- GAME ---------- */
+function startGame(){
+  const start = opt.startpos-1;
+  if(start>=PI.length){ toast('Position de depart trop grande','red'); return; }
+  G = { start, nDone:0, correct:0, lives: opt.lifemode==='stop'?1:opt.lives,
+        streak:0, errors:0, pendingWrong:null, live:true,
+        startTs:Date.now(), timerId:null, freeBuf:'' };
+  document.getElementById('btn-start').style.display='none';
+  document.getElementById('btn-stop').style.display='inline-block';
+  document.getElementById('btn-revise').disabled=true;
+  if(opt.blind) document.getElementById('btn-reveal').style.display='inline-block';
+  updateHearts();
+  if(opt.timer){
+    document.getElementById('lbl-timer').style.display='inline';
+    G.timerId=setInterval(tickTimer,1000); tickTimer();
+  }
+  buildPad();
+  renderPlaying();
+  document.getElementById('lbl-status').textContent = opt.validation==='live'
+    ? 'Tape les decimales une par une.'
+    : 'Tape puis valide avec la touche OK.';
+}
+
+function renderPlaying(){
+  if(opt.blind && !G.blindReveal){
+    // mode aveugle : on masque tout, on montre juste le compteur
+    const disp=document.getElementById('pi-display');
+    disp.style.fontSize=opt.fontsize+'rem';
+    let h = opt.prefix?'<span class="pi-prefix">3,</span> ':'';
+    h += '<span class="d-hidden">'+'&middot; '.repeat(Math.min(G.nDone,50))+'</span>';
+    h += '<span class="d-cur">?</span>';
+    disp.innerHTML=h;
+    document.getElementById('counter').innerHTML='<b>'+G.nDone+'</b> decimales'+
+      (opt.showpos?' &nbsp;|&nbsp; position n&deg;'+(G.start+G.nDone+1):'');
+  } else {
+    renderDisplay(G.nDone, 0);
+  }
+}
+
+function onDigit(d, btn){
+  if(!G || !G.live) return;
+  haptic();
+  if(opt.validation==='free'){
+    G.freeBuf += ''+d;
+    // affichage tampon en mode libre (simple)
+    document.getElementById('lbl-status').textContent='Saisie : '+G.freeBuf+'  (OK pour valider)';
+    return;
+  }
+  // validation immediate
+  const expected = PI[G.start+G.nDone];
+  if(''+d === expected){
+    correctHit(btn);
+  } else {
+    wrongHit(btn, d);
+  }
+}
+
+function correctHit(btn){
+  flash(btn,'ok'); playOk();
+  G.nDone++; G.correct++; G.streak++;
+  // rattrapage
+  if(opt.lifemode==='recup' && opt.recup>0 && G.streak>0 && G.streak%opt.recup===0 && G.lives<opt.lives){
+    G.lives++; updateHearts(); toast('&#10084;&#65039; Vie recuperee !','green');
+  }
+  if(G.start+G.nDone >= PI.length){ endGame('Fin des 10000 decimales ! Bravo !'); return; }
+  renderPlaying();
+}
+
+function wrongHit(btn, d){
+  flash(btn,'ko'); playKo(); hapticErr();
+  G.errors++; G.streak=0; G.lives--;
+  updateHearts();
+  if(!opt.blind){
+    G.pendingWrong = d; renderDisplay(G.nDone, 0); G.pendingWrong=null;
+    setTimeout(()=>{ if(G&&G.live) renderPlaying(); }, 450);
+  }
+  if(G.lives<=0){ G.faultRel=G.nDone; G.faultDigit=d; endGame('Erreur. Partie terminee.'); }
+  else { document.getElementById('lbl-status').textContent='Faux ! Il restait '+PI[G.start+G.nDone]+'. Vies : '+G.lives; }
+}
+
+function onValidateFree(){
+  if(!G || !G.live || opt.validation!=='free') return;
+  if(G.freeBuf===''){ return; }
+  // compare la saisie tampon chiffre a chiffre
+  for(const ch of G.freeBuf){
+    const expected = PI[G.start+G.nDone];
+    if(ch===expected){ G.nDone++; G.correct++; G.streak++;
+      if(opt.lifemode==='recup' && G.streak%opt.recup===0 && G.lives<opt.lives){G.lives++;}
+      if(G.start+G.nDone>=PI.length){ G.freeBuf=''; updateHearts(); endGame('Fin des 10000 ! Bravo !'); return; }
+    } else {
+      G.errors++; G.streak=0; G.lives--; updateHearts();
+      if(G.lives<=0){ G.faultRel=G.nDone; G.faultDigit=ch; G.freeBuf=''; endGame('Erreur. Partie terminee.'); return; }
+      break;
+    }
+  }
+  G.freeBuf=''; updateHearts(); renderPlaying();
+  document.getElementById('lbl-status').textContent='Vies : '+G.lives;
+}
+
+function onBack(){
+  if(!G || !G.live) return;
+  if(opt.validation==='free' && G.freeBuf.length>0){
+    G.freeBuf=G.freeBuf.slice(0,-1);
+    document.getElementById('lbl-status').textContent='Saisie : '+G.freeBuf;
+  }
+}
+
+function updateHearts(){
+  const h=document.getElementById('lbl-hearts');
+  if(opt.lifemode==='stop'){ h.textContent=''; return; }
+  const full='&#10084;&#65039;'.repeat(Math.max(0,G?G.lives:0));
+  h.innerHTML = full || '&#128148;';
+}
+
+function tickTimer(){
+  if(!G) return;
+  const s=Math.floor((Date.now()-G.startTs)/1000);
+  document.getElementById('lbl-timer').textContent=
+    String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+function toggleReveal(){
+  if(!G) return;
+  G.blindReveal=!G.blindReveal;
+  document.getElementById('btn-reveal').textContent=G.blindReveal?'Cacher':'Voir';
+  renderPlaying();
+}
+
+function stopGame(){ if(G&&G.live) endGame('Partie arretee.'); }
+
+function endGame(msg){
+  if(!G) return;
+  G.live=false;
+  if(G.timerId){ clearInterval(G.timerId); G.timerId=null; }
+  const n=G.correct;
+  const durS=Math.floor((Date.now()-G.startTs)/1000);
+  // enregistrer
+  const rec={ n, date:new Date().toISOString(), start:opt.startpos,
+    mode:opt.lifemode, errors:G.errors, dur:durS };
+  scores.unshift(rec);
+  if(scores.length>200) scores.length=200;
+  save('pijoe_scores', scores);
+  let isRecord=false;
+  if(n>best){ best=n; save('pijoe_best',best); updateRecordLabel(); isRecord=true; }
+  document.getElementById('btn-stop').style.display='none';
+  document.getElementById('btn-reveal').style.display='none';
+  document.getElementById('btn-start').style.display='inline-block';
+  document.getElementById('lbl-status').textContent=msg+' Score : '+n+' decimales.';
+  toast((isRecord?'&#127942; NOUVEAU RECORD !\n':'')+msg+'\n'+n+' decimales'+
+    (isRecord?'':'   (record '+best+')'), isRecord?'green':'orange');
+  renderReveal(G.faultRel, G.faultDigit);
+  document.getElementById('btn-revise').disabled=false;
+  G=null;
+}
+
+// affiche validees + faute (rouge) + 20 suivantes (couleur reveal)
+function renderReveal(faultRel, faultDigit){
+  const disp=document.getElementById('pi-display');
+  disp.style.fontSize=opt.fontsize+'rem';
+  const start=opt.startpos-1;
+  const nOk=(faultRel!=null)?faultRel:G.nDone; // decimales correctes
+  const revealEnd=Math.min(PI.length, start+nOk+1+20); // faute + 20 suivantes
+  let html= opt.prefix?'<span class="pi-prefix">3,</span> ':'';
+  for(let i=start;i<revealEnd;i++){
+    const rel=i-start, numDec=i+1;
+    let sep='';
+    if(opt.hundred && numDec>1 && (numDec-1)%100===0) sep='<span class="sep-hundred"></span>';
+    else if(opt.group>0 && numDec>1 && (numDec-1)%opt.group===0) sep='<span class="grp-space"></span>';
+    if(opt.wrap>0 && numDec>1 && (numDec-1)%opt.wrap===0) sep='<br>';
+    let cls,ch=PI[i];
+    if(rel<nOk){ cls='d-ok'; }
+    else if(rel===nOk && faultRel!=null){ cls='d-ko'; ch=PI[i]; } // la bonne decimale, en rouge (tu as fautE ici)
+    else { cls='d-reveal'; }
+    html+=sep+'<span class="'+cls+'">'+ch+'</span>';
+  }
+  disp.innerHTML=html;
+}
+
+/* ---------- REVISER ---------- */
+function openRevise(){
+  if(G && G.live) return;
+  document.getElementById('rv-size').value=opt.fontsize;
+  renderRevise(); openModal('modal-revise');
+}
+function rvJump(dir){
+  const fromEl=document.getElementById('rv-from'), toEl=document.getElementById('rv-to');
+  let from=parseInt(fromEl.value)||1, to=parseInt(toEl.value)||100;
+  const span=Math.max(1,to-from+1);
+  from=Math.min(PI.length, Math.max(1, from+dir*span));
+  to=Math.min(PI.length, from+span-1);
+  fromEl.value=from; toEl.value=to; renderRevise();
+}
+function renderRevise(){
+  let from=parseInt(document.getElementById('rv-from').value)||1;
+  let to=parseInt(document.getElementById('rv-to').value)||100;
+  from=Math.max(1,Math.min(PI.length,from));
+  to=Math.max(from,Math.min(PI.length,to));
+  const size=document.getElementById('rv-size').value;
+  const lineno=document.getElementById('rv-lineno').checked;
+  const disp=document.getElementById('rv-display');
+  disp.style.fontSize=size+'rem';
+  // largeur de ligne : opt.wrap si defini, sinon auto (word-break gere)
+  const wrap=opt.wrap>0?opt.wrap:0;
+  let html='', lineStart=from;
+  let buf = lineno ? '<span class="rv-lineno">'+from+'</span>' : '';
+  for(let numDec=from; numDec<=to; numDec++){
+    const i=numDec-1;
+    let sep='';
+    if(numDec>from){
+      if(opt.hundred && (numDec-1)%100===0) sep='<span class="sep-hundred"></span>';
+      else if(opt.group>0 && (numDec-1)%opt.group===0) sep='<span class="grp-space"></span>';
+    }
+    // saut de ligne
+    if(wrap>0 && numDec>from && (numDec-1)%wrap===0){
+      html+=buf+'<br>';
+      buf = lineno ? '<span class="rv-lineno">'+numDec+'</span>' : '';
+      sep='';
+    }
+    buf+=sep+'<span class="d-ok">'+PI[i]+'</span>';
+  }
+  html+=buf;
+  disp.innerHTML=html;
+}
+
+/* ---------- SCORES MODAL ---------- */
+function openScores(){ renderScores(); openModal('modal-scores'); }
+function renderScores(){
+  document.getElementById('sc-best').textContent=best;
+  const list=document.getElementById('sc-list');
+  if(scores.length===0){ list.innerHTML='<div class="sc-empty">Aucune partie enregistree.</div>'; return; }
+  const mLbl={stop:'Stop',lives:'Vies',recup:'Vies+R'};
+  list.innerHTML = scores.map((s,i)=>{
+    const d=new Date(s.date);
+    const dstr=d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const dur=s.dur?Math.floor(s.dur/60)+'min'+String(s.dur%60).padStart(2,'0'):'';
+    const isRec=s.n===best;
+    return '<div class="sc-item'+(isRec?' sc-record':'')+'">'+
+      '<div class="sc-n">'+s.n+'</div>'+
+      '<div class="sc-meta">'+dstr+'<br>'+(mLbl[s.mode]||s.mode)+
+      ' &middot; depart n&deg;'+(s.start||1)+' &middot; '+s.errors+' err'+(dur?' &middot; '+dur:'')+'</div>'+
+      '<button class="sc-del" onclick="delScore('+i+')" title="Supprimer">&#128465;</button></div>';
+  }).join('');
+}
+function delScore(i){
+  scores.splice(i,1); save('pijoe_scores',scores);
+  // recalcule best
+  best = scores.reduce((m,s)=>Math.max(m,s.n),0); save('pijoe_best',best); updateRecordLabel();
+  renderScores();
+}
+function resetScores(){
+  if(!confirm('Effacer tous les scores et le record ?')) return;
+  scores=[]; best=0; save('pijoe_scores',scores); save('pijoe_best',best);
+  updateRecordLabel(); renderScores(); toast('Scores effaces','orange');
+}
+function exportScores(){
+  const data={version:VERSION,best,scores,exported:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='pi_joe_scores_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function importScores(){
+  const inp=document.getElementById('import-file');
+  inp.onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const d=JSON.parse(r.result);
+        if(!Array.isArray(d.scores)) throw 0;
+        scores=d.scores; best=d.best||scores.reduce((m,s)=>Math.max(m,s.n),0);
+        save('pijoe_scores',scores); save('pijoe_best',best);
+        updateRecordLabel(); renderScores(); toast('Import reussi','green');
+      }catch(err){ toast('Fichier invalide','red'); }
+    };
+    r.readAsText(f); inp.value='';
+  };
+  inp.click();
+}
+
+/* ---------- FEEDBACK ---------- */
+function flash(btn,type){ if(!btn)return; btn.classList.add('pad-flash-'+type); setTimeout(()=>btn.classList.remove('pad-flash-'+type),300); }
+function haptic(){ if(opt.haptic&&navigator.vibrate)navigator.vibrate(10); }
+function hapticErr(){ if(opt.haptic&&navigator.vibrate)navigator.vibrate([40,30,40]); }
+let audioCtx=null;
+function beep(freq,dur){ if(!opt.sound)return; try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.frequency.value=freq;o.type='sine';g.gain.value=.15;o.start();g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+dur);o.stop(audioCtx.currentTime+dur);}catch(e){} }
+function playOk(){ }
+function playKo(){ beep(180,.25); }
+
+/* ---------- MODALS ---------- */
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function openAbout(){ openModal('modal-about'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+/* ---------- TOAST ---------- */
+let toastTid=null;
+function toast(msg,type){
+  const t=document.getElementById('toast');
+  t.className='toast '+(type||'');
+  t.innerHTML=msg;
+  requestAnimationFrame(()=>t.classList.add('show'));
+  clearTimeout(toastTid);
+  toastTid=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+/* clavier physique (desktop) */
+document.addEventListener('keydown',e=>{
+  if(!G||!G.live)return;
+  if(e.key>='0'&&e.key<='9'){ const b=document.getElementById('key-'+e.key); onDigit(parseInt(e.key),b); }
+  else if(e.key==='Backspace'){ onBack(); }
+  else if(e.key==='Enter'){ onValidateFree(); }
+});
+</script>
+</body>
+</html>
