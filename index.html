@@ -38,7 +38,7 @@ header h1 .pi{color:var(--accent2);font-size:1.4rem;}
 .mode-lbl{font-size:.72rem;font-weight:600;color:var(--yellow);opacity:.85;min-height:14px;}
 
 /* ZONE AFFICHAGE DECIMALES */
-.pi-box{background:var(--bg-card);border-radius:10px;padding:14px 16px;min-height:120px;}
+.pi-box{background:var(--bg-card);border-radius:10px;padding:14px 16px;height:170px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
 .pi-display{font-family:'Courier New',monospace;font-weight:700;line-height:1.7;word-break:break-all;letter-spacing:1px;}
 .pi-prefix{color:var(--accent2);}
 .d-ok{color:var(--text);}
@@ -60,8 +60,8 @@ header h1 .pi{color:var(--accent2);font-size:1.4rem;}
 .pad-key:active{transform:scale(0.92);filter:brightness(.85);}
 .pad-key.wide{grid-column:span 1;}
 .pad-key.act{background:var(--grey);font-size:1.2rem;}
-.pad-flash-ok{animation:fok .3s;}
-.pad-flash-ko{animation:fko .3s;}
+.pad-flash-ok{animation:fok .15s;}
+.pad-flash-ko{animation:fko .15s;}
 @keyframes fok{0%{background:var(--ok)}100%{background:var(--key)}}
 @keyframes fko{0%{background:var(--ko)}100%{background:var(--key)}}
 
@@ -326,6 +326,7 @@ function save(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
 
 /* ---------- GAME STATE ---------- */
 let G = null; // {pos, correct, lives, streak, blindReveal, errors, startTs, timerId, live}
+let DISP = { curSpan:null, built:false };
 
 /* ---------- INIT ---------- */
 document.getElementById('about-version').textContent = VERSION;
@@ -375,9 +376,14 @@ function buildPad(){
   rows.flat().forEach(v=>{
     const b=document.createElement('button');
     b.className='pad-key';
-    if(v==='back'){b.classList.add('act');b.innerHTML='&#9003;';b.onclick=()=>onBack();}
-    else if(v==='ok'){b.classList.add('act');b.innerHTML='&#10004;';b.onclick=()=>onValidateFree();b.id='key-ok';}
-    else {b.textContent=v;b.onclick=()=>onDigit(v,b);b.id='key-'+v;}
+    let handler;
+    if(v==='back'){b.classList.add('act');b.innerHTML='&#9003;';handler=()=>onBack();}
+    else if(v==='ok'){b.classList.add('act');b.innerHTML='&#10004;';handler=()=>onValidateFree();b.id='key-ok';}
+    else {b.textContent=v;handler=()=>onDigit(v,b);b.id='key-'+v;}
+    // touchstart = reaction immediate (pas de delai click iOS). fallback click desktop.
+    let touched=false;
+    b.addEventListener('touchstart',e=>{touched=true;e.preventDefault();handler();},{passive:false});
+    b.addEventListener('click',e=>{if(touched){touched=false;return;}handler();});
     pad.appendChild(b);
   });
   // en mode live, le bouton OK ne sert pas -> on le grise
@@ -404,42 +410,85 @@ function modeLabel(){
 }
 function updateRecordLabel(){ document.getElementById('lbl-record').textContent = best; }
 
-// construit l'affichage : validees + courante + reste masque
-function renderDisplay(nDone, curIdx){
-  const disp = document.getElementById('pi-display');
-  disp.style.fontSize = opt.fontsize+'rem';
-  const start = opt.startpos-1;
-  let html = '';
-  if(opt.prefix) html += '<span class="pi-prefix">3,</span> ';
-  // fenetre affichee : on montre depuis start
-  const absDone = start + nDone;
-  const total = PI.length;
-  // on affiche validees, la courante, puis un buffer masque
-  const showAhead = 0; // on ne devoile pas la suite
-  for(let i=start; i<total; i++){
-    const rel = i-start; // 0-based dans la partie
-    let cls, ch=PI[i];
-    if(rel < nDone){ cls='d-ok'; }
-    else if(rel === nDone && curIdx>=0){ cls='d-cur'; ch = G && G.pendingWrong!=null ? G.pendingWrong : '_'; }
-    else if(rel === nDone){ cls='d-cur'; ch='_'; }
-    else { cls='d-hidden'; ch='&middot;'; if(rel>nDone+40) { /* limite le DOM */ } }
-    // separateurs bases sur la position ABSOLUE (i+1 = numero de decimale)
-    let sep='';
-    const numDec = i+1; // 1-based
-    if(opt.hundred && numDec>1 && (numDec-1)%100===0) sep='<span class="sep-hundred"></span>';
-    else if(opt.group>0 && numDec>1 && (numDec-1)%opt.group===0) sep='<span class="grp-space"></span>';
-    if(opt.wrap>0 && numDec>1 && (numDec-1)%opt.wrap===0) sep='<br>';
-    html += sep + '<span class="'+cls+'">'+ch+'</span>';
-    if(rel > nDone+60) break; // on borne le rendu pour perf
+// ---- Moteur d'affichage : append + scroll (historique complet navigable) ----
+// Au demarrage: prefixe + 1re case courante. A chaque frappe: on fige la case
+// validee et on APPEND la nouvelle case courante. Pas de reconstruction du DOM.
+
+// (re)construit la base : prefixe + case courante a la position nDone
+function fullRenderWindow(nDone){
+  const disp=document.getElementById('pi-display');
+  disp.style.fontSize=opt.fontsize+'rem';
+  disp.innerHTML='';
+  DISP.curSpan=null; DISP.built=true;
+  const start=opt.startpos-1;
+  if(opt.prefix){
+    const p=document.createElement('span'); p.className='pi-prefix'; p.textContent='3, ';
+    disp.appendChild(p);
   }
-  disp.innerHTML = html;
-  if(opt.showpos){
-    document.getElementById('counter').innerHTML =
-      '<b>'+nDone+'</b> decimales &nbsp;|&nbsp; position n&deg;'+(absDone+ (curIdx>=0?1:0));
-  } else {
-    document.getElementById('counter').innerHTML = '<b>'+nDone+'</b> decimales';
+  // reconstruit toutes les cases deja validees (utile apres changement d'options)
+  for(let rel=0; rel<nDone; rel++){
+    appendCell(start+rel, disp, false);
+    const sp=disp.lastChild; if(sp&&sp.classList) { sp.className='dg d-ok'; sp.textContent=PI[start+rel]; }
   }
+  // case courante
+  appendCell(start+nDone, disp, true);
+  updateCounter(nDone,start);
+  scrollToCurrent(true);
 }
+
+// cree la case pour l'index absolu i (+ separateurs devant). current=true -> case courante
+function appendCell(i, disp, current){
+  disp=disp||document.getElementById('pi-display');
+  const numDec=i+1;
+  if(opt.hundred && numDec>1 && (numDec-1)%100===0) disp.appendChild(mk('span','sep-hundred'));
+  else if(opt.group>0 && numDec>1 && (numDec-1)%opt.group===0) disp.appendChild(mk('span','grp-space'));
+  if(opt.wrap>0 && numDec>1 && (numDec-1)%opt.wrap===0) disp.appendChild(document.createElement('br'));
+  const s=document.createElement('span');
+  s.className = current ? 'dg d-cur' : 'dg d-hidden';
+  s.textContent = current ? '_' : '\u00b7';
+  s.dataset.i=i;
+  disp.appendChild(s);
+  if(current) DISP.curSpan=s;
+}
+function mk(tag,cls){ const e=document.createElement(tag); e.className=cls; return e; }
+
+function updateCounter(nDone,start){
+  const c=document.getElementById('counter');
+  if(opt.showpos) c.innerHTML='<b>'+nDone+'</b> decimales &nbsp;|&nbsp; position n&deg;'+(start+nDone+1);
+  else c.innerHTML='<b>'+nDone+'</b> decimales';
+}
+
+// auto-scroll pour garder la case courante visible en bas
+function scrollToCurrent(force){
+  const box=document.querySelector('.pi-box');
+  if(box) box.scrollTop = box.scrollHeight;
+}
+
+// une frappe correcte : fige la case courante en validee, append la suivante
+function advanceDisplay(nDone){
+  const start=opt.startpos-1;
+  const prev=start+nDone-1;   // qu'on vient de valider (= ex-case courante)
+  const cur=start+nDone;      // nouvelle courante
+  if(!DISP.built || !DISP.curSpan){ fullRenderWindow(nDone); return; }
+  // fige l'ancienne courante
+  DISP.curSpan.className='dg d-ok';
+  DISP.curSpan.textContent=PI[prev];
+  // append la nouvelle courante
+  if(cur<PI.length) appendCell(cur, null, true);
+  updateCounter(nDone,start);
+  scrollToCurrent();
+}
+
+// marque brievement une mauvaise saisie sur la case courante
+function markWrong(nDone, wrongDigit){
+  if(!DISP.curSpan) return;
+  const sc=DISP.curSpan;
+  sc.className='dg d-ko'; sc.textContent=wrongDigit;
+  setTimeout(()=>{ if(G&&G.live&&DISP.curSpan===sc){ sc.className='dg d-cur'; sc.textContent='_'; } },400);
+}
+
+// compat : ecran idle
+function renderDisplay(nDone, curIdx){ fullRenderWindow(nDone); }
 
 /* ---------- GAME ---------- */
 function startGame(){
@@ -466,17 +515,16 @@ function startGame(){
 
 function renderPlaying(){
   if(opt.blind && !G.blindReveal){
-    // mode aveugle : on masque tout, on montre juste le compteur
     const disp=document.getElementById('pi-display');
     disp.style.fontSize=opt.fontsize+'rem';
     let h = opt.prefix?'<span class="pi-prefix">3,</span> ':'';
-    h += '<span class="d-hidden">'+'&middot; '.repeat(Math.min(G.nDone,50))+'</span>';
+    h += '<span class="d-hidden">'+'&middot; '.repeat(Math.min(G.nDone,40))+'</span>';
     h += '<span class="d-cur">?</span>';
-    disp.innerHTML=h;
+    disp.innerHTML=h; DISP.winStart=-1;
     document.getElementById('counter').innerHTML='<b>'+G.nDone+'</b> decimales'+
       (opt.showpos?' &nbsp;|&nbsp; position n&deg;'+(G.start+G.nDone+1):'');
   } else {
-    renderDisplay(G.nDone, 0);
+    fullRenderWindow(G.nDone);
   }
 }
 
@@ -501,24 +549,21 @@ function onDigit(d, btn){
 function correctHit(btn){
   flash(btn,'ok'); playOk();
   G.nDone++; G.correct++; G.streak++;
-  // rattrapage
   if(opt.lifemode==='recup' && opt.recup>0 && G.streak>0 && G.streak%opt.recup===0 && G.lives<opt.lives){
     G.lives++; updateHearts(); toast('&#10084;&#65039; Vie recuperee !','green');
   }
   if(G.start+G.nDone >= PI.length){ endGame('Fin des 10000 decimales ! Bravo !'); return; }
-  renderPlaying();
+  if(opt.blind && !G.blindReveal) renderPlaying();
+  else advanceDisplay(G.nDone);
 }
 
 function wrongHit(btn, d){
   flash(btn,'ko'); playKo(); hapticErr();
   G.errors++; G.streak=0; G.lives--;
   updateHearts();
-  if(!opt.blind){
-    G.pendingWrong = d; renderDisplay(G.nDone, 0); G.pendingWrong=null;
-    setTimeout(()=>{ if(G&&G.live) renderPlaying(); }, 450);
-  }
-  if(G.lives<=0){ G.faultRel=G.nDone; G.faultDigit=d; endGame('Erreur. Partie terminee.'); }
-  else { document.getElementById('lbl-status').textContent='Faux ! Il restait '+PI[G.start+G.nDone]+'. Vies : '+G.lives; }
+  if(G.lives<=0){ G.faultRel=G.nDone; G.faultDigit=d; endGame('Erreur. Partie terminee.'); return; }
+  if(!opt.blind) markWrong(G.nDone, d);
+  document.getElementById('lbl-status').textContent='Faux ! Il restait '+PI[G.start+G.nDone]+'. Vies : '+G.lives;
 }
 
 function onValidateFree(){
@@ -723,7 +768,7 @@ function importScores(){
 }
 
 /* ---------- FEEDBACK ---------- */
-function flash(btn,type){ if(!btn)return; btn.classList.add('pad-flash-'+type); setTimeout(()=>btn.classList.remove('pad-flash-'+type),300); }
+function flash(btn,type){ if(!btn)return; btn.classList.remove('pad-flash-ok','pad-flash-ko'); void btn.offsetWidth; btn.classList.add('pad-flash-'+type); setTimeout(()=>btn.classList.remove('pad-flash-'+type),150); }
 function haptic(){ if(opt.haptic&&navigator.vibrate)navigator.vibrate(10); }
 function hapticErr(){ if(opt.haptic&&navigator.vibrate)navigator.vibrate([40,30,40]); }
 let audioCtx=null;
