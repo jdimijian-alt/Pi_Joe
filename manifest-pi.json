@@ -1,7 +1,8 @@
 {
   "name": "Pi_Joe",
   "short_name": "Pi_Joe",
-  "start_url": ".",
+  "start_url": "/Pi_Joe/",
+  "scope": "/Pi_Joe/",
   "display": "standalone",
   "background_color": "#1e2a3a",
   "theme_color": "#141e2a",
