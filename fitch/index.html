@@ -81,6 +81,15 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .felt .card{--w:68px}
 .pos{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.8rem;opacity:.85}
+/* ---- Réglage position ---- */
+.setting{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:.9rem;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 .95rem var(--f-body);width:40px;padding:8px 0;border:0;border-right:1px solid var(--line);
+  background:var(--surface);color:var(--fg);cursor:pointer;font-variant-numeric:tabular-nums}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--felt);color:var(--felt-fg)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.pos.ind{opacity:1;font-weight:600}
 @media (prefers-reduced-motion:reduce){.deck button,.deck button .card{transition:none}}
 </style>
 </head>
@@ -93,6 +102,10 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
   </header>
 
   <section>
+    <div class="setting">
+      <span id="seglbl">Position de la carte de couleur</span>
+      <div class="seg" id="seg" role="group" aria-labelledby="seglbl"></div>
+    </div>
     <h2>Main tirée</h2>
     <div class="tray" id="tray"></div>
     <div class="bar">
@@ -126,6 +139,8 @@ const SUITS=[{s:'♣',n:'trèfle',c:'b'},{s:'♦',n:'carreau',c:'r'},{s:'♥',n:
 const RANKS=['1','2','3','4','5','6','7','8','9','10','V','D','R'];
 const PERMS={1:'PMG',2:'PGM',3:'MPG',4:'MGP',5:'GPM',6:'GMP'};
 let picked=[]; // {r:0..12, s:0..3}
+let indPos=2;  // position (1..4) de la carte de couleur
+try{const v=+localStorage.getItem('fc-pos');if(v>=1&&v<=4)indPos=v;}catch(e){}
 
 const key=c=>c.s*13+c.r;
 const val=c=>c.r*4+c.s;              // ordre total : rang puis couleur
@@ -189,7 +204,9 @@ function encode(cards){
     if(d>6){d=13-d;ind=b;hid=a;}
     const rest=cards.filter(c=>c!==ind&&c!==hid).sort((x,y)=>val(x)-val(y));
     const map={P:rest[0],M:rest[1],G:rest[2]};
-    return {hidden:hid,order:[ind,...PERMS[d].split('').map(l=>map[l])]};
+    const order=PERMS[d].split('').map(l=>map[l]);
+    order.splice(indPos-1,0,ind);
+    return {hidden:hid,order};
   }
 }
 
@@ -197,6 +214,7 @@ function run(){
   const res=encode(picked);
   const sh=document.getElementById('shown');sh.innerHTML='';
   res.order.forEach((c,i)=>{const p=document.createElement('div');p.className='pos';
+    if(i===indPos-1)p.classList.add('ind');
     p.appendChild(cardEl(c));p.append(String(i+1));sh.appendChild(p);});
   const hd=document.getElementById('hidden');hd.innerHTML='';
   hd.appendChild(cardEl(res.hidden));
@@ -207,6 +225,18 @@ function run(){
 document.getElementById('go').onclick=run;
 document.getElementById('reset').onclick=()=>{picked=[];document.getElementById('result').hidden=true;render();};
 
+function buildSeg(){
+  const s=document.getElementById('seg');s.innerHTML='';
+  for(let i=1;i<=4;i++){
+    const b=document.createElement('button');b.id='pos'+i;b.textContent=i;
+    b.setAttribute('aria-pressed',i===indPos);
+    b.onclick=()=>{indPos=i;try{localStorage.setItem('fc-pos',i);}catch(e){}
+      buildSeg();if(!document.getElementById('result').hidden)run();};
+    s.appendChild(b);
+  }
+}
+
+buildSeg();
 buildGrid();
 render();
 </script>
