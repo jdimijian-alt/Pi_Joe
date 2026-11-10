@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>[hidden]{display:none!important}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
-<title>Tour de Fitch Cheney</title>
+<title>Cartes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=Instrument+Sans:wght@400;600&display=swap">
 <style>
-/* Layout : une colonne ; jeu de 52 vraies cartes rangé par couleur, puis tapis de résultat */
+/* Layout : une colonne ; panneau secret (triple tap), main tirée, résultat sur tapis, jeu de 52 cartes */
 :root{
   --bg:#eef0ec; --surface:#ffffff; --fg:#1d2420; --muted:#5d6a63; --line:#cfd6d1;
   --felt:#21473a; --felt-fg:#e9f1ec; --accent:#c8962f;
-  --card:#fdfcf8; --card-edge:#d6d0c2; --red:#c0202d; --black:#16181a;
+  --card:#fdfcf8; --card-edge:#d6d0c2; --red:#c0202d; --black:#16181a; --gold:#c8962f; --skin:#f3e2cc;
   --f-display:"Bodoni Moda", Georgia, "Times New Roman", serif;
   --f-body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -26,9 +26,10 @@ body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body)}
 main{max-width:780px;margin:0 auto;padding-block:24px 48px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:20px}
-h1{font:700 2rem/1.1 var(--f-display);margin:0;text-wrap:balance}
-.sub{color:var(--muted);margin:4px 0 0}
+h1{font:700 1.6rem/1.1 var(--f-display);margin:0 0 12px;text-wrap:balance}
 h2{font:600 .75rem/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+#tap{user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:default;padding-block:4px}
+.sub{color:var(--muted);margin:0 0 8px;font-size:.9rem}
 section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
 
 /* ---- Carte à jouer ---- */
@@ -44,14 +45,14 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 .card .tl{top:calc(var(--w)*.06);left:calc(var(--w)*.07)}
 .card .br{bottom:calc(var(--w)*.06);right:calc(var(--w)*.07);transform:rotate(180deg)}
 .card .pip{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--w)*.5);line-height:1}
-.card .pip.face{font-weight:700;font-size:calc(var(--w)*.44)}
-.card .pip.face::after{content:"";position:absolute;inset:22% 20%;border:1px solid currentColor;opacity:.35;border-radius:3px}
+.card .pip svg{width:56%;height:auto;margin-top:2%}
 .card.slot{background:transparent;border:1.5px dashed var(--line);box-shadow:none}
 
 /* ---- Sélection ---- */
 .suit{margin-bottom:14px}
 .suit:last-child{margin-bottom:0}
-.deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px 6px}
+.deck{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:8px 6px}
+@media (max-width:640px){.deck{grid-template-columns:repeat(7,minmax(0,1fr))}}
 .deck button{all:unset;cursor:pointer;display:block;border-radius:6px;transition:transform .15s ease}
 .deck button .card{--w:100%;width:100%}
 .deck button:hover .card{transform:translateY(-2px)}
@@ -61,8 +62,11 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 .deck button:disabled{cursor:default}
 .deck button:disabled .card{opacity:.3;filter:grayscale(.6)}
 .deck .card .ix{font-size:13px} .deck .card .ix i{font-size:11px}
-.deck .card .pip{font-size:24px} .deck .card .pip.face{font-size:20px}
+.deck .card .pip{font-size:24px}
 .deck .card{border-radius:5px}
+/* repère discret : point sur le 1, 2, 3 ou 4 de pique */
+.deck button.mark .card::after{content:"";position:absolute;left:50%;bottom:8%;width:3px;height:3px;
+  border-radius:50%;background:var(--black);opacity:.5;transform:translateX(-50%)}
 
 .tray{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;min-height:80px;align-items:center}
 .tray .card{--w:56px;cursor:pointer}
@@ -81,32 +85,32 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .felt .card{--w:68px}
 .pos{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.8rem;opacity:.85}
-/* ---- Réglage position ---- */
-.setting{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:.9rem;color:var(--muted)}
+
+/* ---- Panneau secret ---- */
+.setting{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .seg button{font:600 .95rem var(--f-body);width:40px;padding:8px 0;border:0;border-right:1px solid var(--line);
   background:var(--surface);color:var(--fg);cursor:pointer;font-variant-numeric:tabular-nums}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--felt);color:var(--felt-fg)}
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.pos.ind{opacity:1;font-weight:600}
 @media (prefers-reduced-motion:reduce){.deck button,.deck button .card{transition:none}}
 </style>
 </head>
 <body>
 
 <main>
-  <header>
+  <section id="secret" hidden>
     <h1>Tour de Fitch Cheney</h1>
-    <p class="sub">Touchez les 5 cartes tirées. L'appli indique la carte à mettre de côté et l'ordre des 4 autres.</p>
-  </header>
-
-  <section>
     <div class="setting">
       <span id="seglbl">Position de la carte de couleur</span>
       <div class="seg" id="seg" role="group" aria-labelledby="seglbl"></div>
     </div>
-    <h2>Main tirée</h2>
+  </section>
+
+  <section>
+    <h2 id="tap">Main tirée</h2>
+    <p class="sub">Touchez les 5 cartes tirées.</p>
     <div class="tray" id="tray"></div>
     <div class="bar">
       <button class="btn primary" id="go" disabled>Ranger</button>
@@ -137,6 +141,7 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 <script>
 const SUITS=[{s:'♣',n:'trèfle',c:'b'},{s:'♦',n:'carreau',c:'r'},{s:'♥',n:'cœur',c:'r'},{s:'♠',n:'pique',c:'b'}];
 const RANKS=['1','2','3','4','5','6','7','8','9','10','V','D','R'];
+const RANKS_EN=['1','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const PERMS={1:'PMG',2:'PGM',3:'MPG',4:'MGP',5:'GPM',6:'GMP'};
 let picked=[]; // {r:0..12, s:0..3}
 let indPos=2;  // position (1..4) de la carte de couleur
@@ -145,13 +150,36 @@ try{const v=+localStorage.getItem('fc-pos');if(v>=1&&v<=4)indPos=v;}catch(e){}
 const key=c=>c.s*13+c.r;
 const val=c=>c.r*4+c.s;              // ordre total : rang puis couleur
 
+// Figures dessinées (buste : V toque à plume, D diadème, R couronne et barbe)
+function figure(r,suit){
+  const body='<path d="M5 50C5 38 12 34 20 34S35 38 35 50Z" fill="currentColor"/>'+
+    `<text x="20" y="46.5" text-anchor="middle" font-size="8" fill="var(--gold)">${suit}</text>`;
+  const head='<circle cx="20" cy="24" r="8" fill="var(--skin)" stroke="currentColor" stroke-width="1.1"/>'+
+    '<circle cx="17.2" cy="23.5" r=".9" fill="currentColor"/><circle cx="22.8" cy="23.5" r=".9" fill="currentColor"/>';
+  const mouth='<path d="M18 28.3Q20 29.6 22 28.3" fill="none" stroke="currentColor" stroke-width=".8"/>';
+  let s='';
+  if(r===10){ // Valet
+    s=body+head+mouth+'<path d="M10.5 19.5Q11 10.5 20.5 11Q30 11.5 30 19.5Z" fill="currentColor"/>'+
+      '<path d="M26 13Q33 3 37 5Q33 8 29 15Z" fill="var(--gold)" stroke="currentColor" stroke-width=".5"/>';
+  }else if(r===11){ // Dame
+    s='<path d="M10 37Q8.5 15 20 15Q31.5 15 30 37Z" fill="currentColor"/>'+body+head+mouth+
+      '<path d="M12.5 18Q20 9.5 27.5 18Q20 15.5 12.5 18Z" fill="var(--gold)" stroke="currentColor" stroke-width=".6"/>'+
+      '<circle cx="20" cy="13.6" r="1.4" fill="currentColor"/>';
+  }else{ // Roi
+    s=body+head+
+      '<path d="M12.5 26.5Q14 37 20 37T27.5 26.5Q25 31 20 31T12.5 26.5Z" fill="currentColor"/>'+
+      '<path d="M11 18V8.5L15.5 13 20 6.5 24.5 13 29 8.5V18Z" fill="var(--gold)" stroke="currentColor" stroke-width=".7" stroke-linejoin="round"/>';
+  }
+  return `<svg viewBox="0 0 40 50" aria-hidden="true">${s}</svg>`;
+}
+
 function cardEl(c){
   const d=document.createElement('div');
   const su=SUITS[c.s], rk=RANKS[c.r], face=c.r>=10;
   d.className='card '+su.c;
   d.innerHTML=`<span class="ix tl">${rk}<i>${su.s}</i></span>`+
-    `<span class="pip${face?' face':''}">${face?rk:su.s}</span>`+
-    `<span class="ix br">${rk}<i>${su.s}</i></span>`;
+    `<span class="pip">${face?figure(c.r,su.s):su.s}</span>`+
+    `<span class="ix br">${RANKS_EN[c.r]}<i>${su.s}</i></span>`;
   d.setAttribute('aria-label',rk+' de '+su.n);
   return d;
 }
@@ -171,6 +199,10 @@ function buildGrid(){
     });
     wrap.appendChild(deck);g.appendChild(wrap);
   });
+}
+
+function updateMark(){
+  for(let r=0;r<4;r++)document.getElementById('p'+(3*13+r)).classList.toggle('mark',r===indPos-1);
 }
 
 function toggle(c){
@@ -214,7 +246,6 @@ function run(){
   const res=encode(picked);
   const sh=document.getElementById('shown');sh.innerHTML='';
   res.order.forEach((c,i)=>{const p=document.createElement('div');p.className='pos';
-    if(i===indPos-1)p.classList.add('ind');
     p.appendChild(cardEl(c));p.append(String(i+1));sh.appendChild(p);});
   const hd=document.getElementById('hidden');hd.innerHTML='';
   hd.appendChild(cardEl(res.hidden));
@@ -222,22 +253,31 @@ function run(){
   r.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-document.getElementById('go').onclick=run;
-document.getElementById('reset').onclick=()=>{picked=[];document.getElementById('result').hidden=true;render();};
-
 function buildSeg(){
   const s=document.getElementById('seg');s.innerHTML='';
   for(let i=1;i<=4;i++){
     const b=document.createElement('button');b.id='pos'+i;b.textContent=i;
     b.setAttribute('aria-pressed',i===indPos);
     b.onclick=()=>{indPos=i;try{localStorage.setItem('fc-pos',i);}catch(e){}
-      buildSeg();if(!document.getElementById('result').hidden)run();};
+      buildSeg();updateMark();if(!document.getElementById('result').hidden)run();};
     s.appendChild(b);
   }
 }
 
+// Triple tap sur « Main tirée » : affiche / masque le panneau secret
+let taps=0,tapTimer=null;
+document.getElementById('tap').addEventListener('click',()=>{
+  taps++;clearTimeout(tapTimer);
+  if(taps>=3){taps=0;const p=document.getElementById('secret');p.hidden=!p.hidden;return;}
+  tapTimer=setTimeout(()=>taps=0,600);
+});
+
+document.getElementById('go').onclick=run;
+document.getElementById('reset').onclick=()=>{picked=[];document.getElementById('result').hidden=true;render();};
+
 buildSeg();
 buildGrid();
+updateMark();
 render();
 </script>
 </body>
