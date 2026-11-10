@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <style>[hidden]{display:none!important}body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
 <title>Cartes</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -12,7 +12,7 @@
 :root{
   --bg:#eef0ec; --surface:#ffffff; --fg:#1d2420; --muted:#5d6a63; --line:#cfd6d1;
   --felt:#21473a; --felt-fg:#e9f1ec; --accent:#c8962f;
-  --card:#fdfcf8; --card-edge:#d6d0c2; --red:#c0202d; --black:#16181a; --gold:#c8962f; --skin:#f3e2cc;
+  --card:#ffffff; --card-edge:#cfc9bb; --red:#d40000; --black:#000000;
   --f-display:"Bodoni Moda", Georgia, "Times New Roman", serif;
   --f-body:"Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
@@ -22,30 +22,33 @@
 :root[data-theme="dark"]{
   --bg:#121714; --surface:#1a211d; --fg:#e4ebe6; --muted:#93a39a; --line:#2e3933;
   --felt:#183a2e; --felt-fg:#e4efe8; --accent:#dcaa4c; color-scheme:dark}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body)}
 main{max-width:780px;margin:0 auto;padding-block:24px 48px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   display:flex;flex-direction:column;gap:20px}
-h1{font:700 1.6rem/1.1 var(--f-display);margin:0 0 12px;text-wrap:balance}
+h1{font:700 1.5rem/1.1 var(--f-display);margin:0;text-wrap:balance}
 h2{font:600 .75rem/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
-#tap{user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:default;padding-block:4px}
+#tap{display:block;margin:-12px -12px 0;padding:12px 12px 12px;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;cursor:default}
 .sub{color:var(--muted);margin:0 0 8px;font-size:.9rem}
 section{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px}
 
 /* ---- Carte à jouer ---- */
-.card{--w:52px;width:var(--w);aspect-ratio:5/7;max-width:100%;position:relative;flex:none;
-  background:linear-gradient(160deg,#fff 0%,var(--card) 60%,#f3efe4 100%);
-  border:1px solid var(--card-edge);border-radius:calc(var(--w)*.1);
+.card{--w:52px;container-type:inline-size;width:var(--w);aspect-ratio:5/7;max-width:100%;position:relative;flex:none;
+  background:var(--card);border:1px solid var(--card-edge);border-radius:8%/5.7%;overflow:hidden;
   box-shadow:0 1px 1px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.08);
-  font-family:var(--f-display);color:var(--black);user-select:none}
+  font-family:var(--f-display);color:var(--black);user-select:none;-webkit-user-select:none}
 .card.r{color:var(--red)}
-.card .ix{position:absolute;display:flex;flex-direction:column;align-items:center;line-height:.9;
-  font-weight:700;font-size:calc(var(--w)*.26)}
-.card .ix i{font-style:normal;font-size:calc(var(--w)*.22);margin-top:1px}
-.card .tl{top:calc(var(--w)*.06);left:calc(var(--w)*.07)}
-.card .br{bottom:calc(var(--w)*.06);right:calc(var(--w)*.07);transform:rotate(180deg)}
-.card .pip{position:absolute;inset:0;display:grid;place-items:center;font-size:calc(var(--w)*.5);line-height:1}
-.card .pip svg{width:56%;height:auto;margin-top:2%}
+.card .art{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none;-webkit-user-drag:none}
+.card .art.num{width:56%;height:88%}
+.card .art.face{width:66%;height:82%}
+.card .ix{position:absolute;display:flex;flex-direction:column;align-items:center;line-height:.92;
+  font-weight:700;font-size:19cqw;background:var(--card);border-radius:3cqw;padding:1cqw .5cqw}
+.card .ix b{font-weight:700;letter-spacing:-.06em}
+.card .ix i{font-style:normal;font-size:.82em}
+.card .tl{top:3%;left:3.5%}
+.card .br{bottom:3%;right:3.5%;transform:rotate(180deg)}
 .card.slot{background:transparent;border:1.5px dashed var(--line);box-shadow:none}
 
 /* ---- Sélection ---- */
@@ -55,17 +58,13 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 @media (max-width:640px){.deck{grid-template-columns:repeat(7,minmax(0,1fr))}}
 .deck button{all:unset;cursor:pointer;display:block;border-radius:6px;transition:transform .15s ease}
 .deck button .card{--w:100%;width:100%}
-.deck button:hover .card{transform:translateY(-2px)}
 .deck button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .deck button[aria-pressed="true"]{transform:translateY(-5px)}
 .deck button[aria-pressed="true"] .card{box-shadow:0 0 0 3px var(--accent),0 6px 12px rgba(0,0,0,.2)}
 .deck button:disabled{cursor:default}
 .deck button:disabled .card{opacity:.3;filter:grayscale(.6)}
-.deck .card .ix{font-size:13px} .deck .card .ix i{font-size:11px}
-.deck .card .pip{font-size:24px}
-.deck .card{border-radius:5px}
 /* repère discret : point sur le 1, 2, 3 ou 4 de pique */
-.deck button.mark .card::after{content:"";position:absolute;left:50%;bottom:8%;width:3px;height:3px;
+.deck button.mark .card::after{content:"";position:absolute;left:50%;bottom:2.5%;width:3px;height:3px;
   border-radius:50%;background:var(--black);opacity:.5;transform:translateX(-50%)}
 
 .tray{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;min-height:80px;align-items:center}
@@ -83,29 +82,42 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 .felt p{margin:0 0 10px}
 .split{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
 .row{display:flex;gap:10px;flex-wrap:wrap}
-.felt .card{--w:68px}
-.pos{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.8rem;opacity:.85}
+.felt .card{--w:66px}
+.pos{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.8rem}
+.pos span{opacity:.8}
 
 /* ---- Panneau secret ---- */
-.setting{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+#secret{display:flex;flex-direction:column;gap:12px}
+#secret[hidden]{display:none}
+.head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.setting{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.seg button{font:600 .95rem var(--f-body);width:40px;padding:8px 0;border:0;border-right:1px solid var(--line);
+.seg button{font:600 .95rem var(--f-body);min-width:44px;padding:8px 10px;border:0;border-right:1px solid var(--line);
   background:var(--surface);color:var(--fg);cursor:pointer;font-variant-numeric:tabular-nums}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--felt);color:var(--felt-fg)}
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-@media (prefers-reduced-motion:reduce){.deck button,.deck button .card{transition:none}}
+.credit{font-size:.75rem;color:var(--muted);margin:0}
+@media (prefers-reduced-motion:reduce){.deck button{transition:none}}
 </style>
 </head>
 <body>
 
 <main>
   <section id="secret" hidden>
-    <h1>Tour de Fitch Cheney</h1>
-    <div class="setting">
-      <span id="seglbl">Position de la carte de couleur</span>
-      <div class="seg" id="seg" role="group" aria-labelledby="seglbl"></div>
+    <div class="head">
+      <h1>Tour de Fitch Cheney</h1>
+      <button class="btn" id="hide">Cacher</button>
     </div>
+    <div class="setting">
+      <span id="langlbl">Index des cartes</span>
+      <div class="seg" id="segLang" role="group" aria-labelledby="langlbl"></div>
+    </div>
+    <div class="setting">
+      <span id="poslbl">Position de la carte de couleur</span>
+      <div class="seg" id="segPos" role="group" aria-labelledby="poslbl"></div>
+    </div>
+    <p class="credit">Cartes : Vectorized Playing Cards 1.3, © 2011 Chris Aguilar, licence LGPL 3.</p>
   </section>
 
   <section>
@@ -139,66 +151,50 @@ section{background:var(--surface);border:1px solid var(--line);border-radius:12p
 </main>
 
 <script>
-const SUITS=[{s:'♣',n:'trèfle',c:'b'},{s:'♦',n:'carreau',c:'r'},{s:'♥',n:'cœur',c:'r'},{s:'♠',n:'pique',c:'b'}];
-const RANKS=['1','2','3','4','5','6','7','8','9','10','V','D','R'];
-const RANKS_EN=['1','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const SUITS=[{s:'♣︎',f:'C',n:'trèfle',c:'b'},{s:'♦︎',f:'D',n:'carreau',c:'r'},
+             {s:'♥︎',f:'H',n:'cœur',c:'r'},{s:'♠︎',f:'S',n:'pique',c:'b'}];
+const IDX={fr:['1','2','3','4','5','6','7','8','9','10','V','D','R'],
+           en:['A','2','3','4','5','6','7','8','9','10','J','Q','K']};
+const FILE=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const PERMS={1:'PMG',2:'PGM',3:'MPG',4:'MGP',5:'GPM',6:'GMP'};
 let picked=[]; // {r:0..12, s:0..3}
 let indPos=2;  // position (1..4) de la carte de couleur
+let lang='fr';
 try{const v=+localStorage.getItem('fc-pos');if(v>=1&&v<=4)indPos=v;}catch(e){}
+try{const l=localStorage.getItem('fc-lang');if(l==='fr'||l==='en')lang=l;}catch(e){}
+const save=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
 
 const key=c=>c.s*13+c.r;
 const val=c=>c.r*4+c.s;              // ordre total : rang puis couleur
-
-// Figures dessinées (buste : V toque à plume, D diadème, R couronne et barbe)
-function figure(r,suit){
-  const body='<path d="M5 50C5 38 12 34 20 34S35 38 35 50Z" fill="currentColor"/>'+
-    `<text x="20" y="46.5" text-anchor="middle" font-size="8" fill="var(--gold)">${suit}</text>`;
-  const head='<circle cx="20" cy="24" r="8" fill="var(--skin)" stroke="currentColor" stroke-width="1.1"/>'+
-    '<circle cx="17.2" cy="23.5" r=".9" fill="currentColor"/><circle cx="22.8" cy="23.5" r=".9" fill="currentColor"/>';
-  const mouth='<path d="M18 28.3Q20 29.6 22 28.3" fill="none" stroke="currentColor" stroke-width=".8"/>';
-  let s='';
-  if(r===10){ // Valet
-    s=body+head+mouth+'<path d="M10.5 19.5Q11 10.5 20.5 11Q30 11.5 30 19.5Z" fill="currentColor"/>'+
-      '<path d="M26 13Q33 3 37 5Q33 8 29 15Z" fill="var(--gold)" stroke="currentColor" stroke-width=".5"/>';
-  }else if(r===11){ // Dame
-    s='<path d="M10 37Q8.5 15 20 15Q31.5 15 30 37Z" fill="currentColor"/>'+body+head+mouth+
-      '<path d="M12.5 18Q20 9.5 27.5 18Q20 15.5 12.5 18Z" fill="var(--gold)" stroke="currentColor" stroke-width=".6"/>'+
-      '<circle cx="20" cy="13.6" r="1.4" fill="currentColor"/>';
-  }else{ // Roi
-    s=body+head+
-      '<path d="M12.5 26.5Q14 37 20 37T27.5 26.5Q25 31 20 31T12.5 26.5Z" fill="currentColor"/>'+
-      '<path d="M11 18V8.5L15.5 13 20 6.5 24.5 13 29 8.5V18Z" fill="var(--gold)" stroke="currentColor" stroke-width=".7" stroke-linejoin="round"/>';
-  }
-  return `<svg viewBox="0 0 40 50" aria-hidden="true">${s}</svg>`;
-}
+const label=c=>IDX.fr[c.r]+' de '+SUITS[c.s].n;
 
 function cardEl(c){
   const d=document.createElement('div');
-  const su=SUITS[c.s], rk=RANKS[c.r], face=c.r>=10;
+  const su=SUITS[c.s], rk=IDX[lang][c.r];
   d.className='card '+su.c;
-  d.innerHTML=`<span class="ix tl">${rk}<i>${su.s}</i></span>`+
-    `<span class="pip">${face?figure(c.r,su.s):su.s}</span>`+
-    `<span class="ix br">${RANKS_EN[c.r]}<i>${su.s}</i></span>`;
-  d.setAttribute('aria-label',rk+' de '+su.n);
+  d.innerHTML=`<img class="art ${c.r>=10?'face':'num'}" src="cards/${FILE[c.r]}${su.f}.svg" alt="" draggable="false">`+
+    `<span class="ix tl"><b>${rk}</b><i>${su.s}</i></span>`+
+    `<span class="ix br"><b>${rk}</b><i>${su.s}</i></span>`;
+  d.setAttribute('role','img');d.setAttribute('aria-label',label(c));
   return d;
 }
 
 function buildGrid(){
-  const g=document.getElementById('grid');
+  const g=document.getElementById('grid');g.innerHTML='';
   SUITS.forEach((su,si)=>{
     const wrap=document.createElement('div');wrap.className='suit';
     const deck=document.createElement('div');deck.className='deck';
-    RANKS.forEach((rk,ri)=>{
+    for(let ri=0;ri<13;ri++){
+      const c={r:ri,s:si};
       const b=document.createElement('button');
-      b.id='p'+(si*13+ri);b.setAttribute('aria-pressed','false');
-      b.setAttribute('aria-label',rk+' de '+su.n);
-      b.appendChild(cardEl({r:ri,s:si}));
-      b.onclick=()=>toggle({r:ri,s:si});
+      b.id='p'+key(c);b.setAttribute('aria-pressed','false');b.setAttribute('aria-label',label(c));
+      b.appendChild(cardEl(c));
+      b.onclick=()=>toggle(c);
       deck.appendChild(b);
-    });
+    }
     wrap.appendChild(deck);g.appendChild(wrap);
   });
+  updateMark();
 }
 
 function updateMark(){
@@ -246,38 +242,66 @@ function run(){
   const res=encode(picked);
   const sh=document.getElementById('shown');sh.innerHTML='';
   res.order.forEach((c,i)=>{const p=document.createElement('div');p.className='pos';
-    p.appendChild(cardEl(c));p.append(String(i+1));sh.appendChild(p);});
+    const n=document.createElement('span');n.textContent=i+1;
+    p.append(cardEl(c),n);sh.appendChild(p);});
   const hd=document.getElementById('hidden');hd.innerHTML='';
   hd.appendChild(cardEl(res.hidden));
   const r=document.getElementById('result');r.hidden=false;
   r.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-function buildSeg(){
-  const s=document.getElementById('seg');s.innerHTML='';
-  for(let i=1;i<=4;i++){
-    const b=document.createElement('button');b.id='pos'+i;b.textContent=i;
-    b.setAttribute('aria-pressed',i===indPos);
-    b.onclick=()=>{indPos=i;try{localStorage.setItem('fc-pos',i);}catch(e){}
-      buildSeg();updateMark();if(!document.getElementById('result').hidden)run();};
+function seg(id,opts,cur,onPick){
+  const s=document.getElementById(id);s.innerHTML='';
+  opts.forEach(([v,txt])=>{
+    const b=document.createElement('button');b.textContent=txt;b.id=id+'-'+v;
+    b.setAttribute('aria-pressed',v===cur);
+    b.onclick=()=>onPick(v);
     s.appendChild(b);
-  }
+  });
+}
+function buildSettings(){
+  seg('segLang',[['fr','FR'],['en','EN']],lang,v=>{lang=v;save('fc-lang',v);refresh();});
+  seg('segPos',[[1,'1'],[2,'2'],[3,'3'],[4,'4']],indPos,v=>{indPos=v;save('fc-pos',v);refresh();});
+}
+function refresh(){
+  buildSettings();buildGrid();render();
+  if(!document.getElementById('result').hidden)run();
 }
 
-// Triple tap sur « Main tirée » : affiche / masque le panneau secret
-let taps=0,tapTimer=null;
-document.getElementById('tap').addEventListener('click',()=>{
-  taps++;clearTimeout(tapTimer);
-  if(taps>=3){taps=0;const p=document.getElementById('secret');p.hidden=!p.hidden;return;}
-  tapTimer=setTimeout(()=>taps=0,600);
-});
+// ---- Panneau secret : triple tap sur « Main tirée » ----
+const secret=document.getElementById('secret');
+function toggleSecret(){secret.hidden=!secret.hidden;if(!secret.hidden)window.scrollTo({top:0,behavior:'smooth'});}
+document.getElementById('hide').onclick=()=>{secret.hidden=true;};
+(function(){
+  const el=document.getElementById('tap');
+  const GAP=450, MOVE=15;          // délai max entre deux taps (ms), glissement max (px)
+  let taps=[], start=null, multi=false;
+  function tap(x,y){
+    const now=Date.now(), last=taps[taps.length-1];
+    if(last&&(now-last.t>GAP||Math.hypot(x-last.x,y-last.y)>40))taps=[];
+    taps.push({t:now,x,y});
+    if(taps.length===3){taps=[];toggleSecret();}
+  }
+  el.addEventListener('touchstart',e=>{
+    multi=e.touches.length>1;
+    const t=e.touches[0];start={x:t.clientX,y:t.clientY};
+  },{passive:true});
+  el.addEventListener('touchend',e=>{
+    e.preventDefault();              // bloque le zoom double tap d'iOS et le clic simulé
+    const t=e.changedTouches[0];
+    if(multi||!start||Math.hypot(t.clientX-start.x,t.clientY-start.y)>MOVE){taps=[];return;}
+    tap(t.clientX,t.clientY);
+  },{passive:false});
+  el.addEventListener('touchcancel',()=>{taps=[];});
+  el.addEventListener('click',e=>{if(e.detail===3)toggleSecret();});   // souris
+  el.addEventListener('dblclick',e=>e.preventDefault());
+})();
 
 document.getElementById('go').onclick=run;
 document.getElementById('reset').onclick=()=>{picked=[];document.getElementById('result').hidden=true;render();};
 
-buildSeg();
+buildSettings();
 buildGrid();
-updateMark();
 render();
 </script>
 </body>
